@@ -69,7 +69,7 @@
       font-size: 50px;
   }
   .logo {
-      color: #f4511e;
+      color: SkyBlue;
       font-size: 200px;
   }
   .thumbnail {
@@ -216,7 +216,7 @@
 
 <div class="jumbotron text-center">
   <h1>RC Computing Services</h1> 
-  <p>We specialize in you.</p> 
+  <p>We specialize in serving you.</p> 
   <!-- <form>
     <div class="input-group">
       <input type="email" class="form-control" size="50" placeholder="Email Address" required>
@@ -305,9 +305,9 @@
   <div class="row">
     <div class="col-sm-5">
       <p>Contact us and we'll get back to you within 24 hours.</p>
-      <p><span class="glyphicon glyphicon-map-marker"></span> Fayetteville, AR</p>
+      <p><span class="glyphicon glyphicon-map-marker"></span> 14446 Savoy Rd. Fayetteville, AR 72704</p>
       <p><span class="glyphicon glyphicon-phone"></span> 479.903.5502</p>
-      <p><span class="glyphicon glyphicon-envelope"></span> riverguy64@gmail.com</p>
+      <p><span class="glyphicon glyphicon-envelope"></span> <a href="mailto:rick@rccomputing.net?Subject=Website%20Inquiry">Send Email</a></p>
     </div>
     <div class="col-sm-7 slideanim">
       <div class="row">
@@ -361,6 +361,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
     <span class="glyphicon glyphicon-chevron-up"></span>
   </a>
   <p>Bootstrap Theme Made By <a href="http://www.w3schools.com" title="Visit w3schools">www.w3schools.com</a></p>
+  <p>&copy 2117, RC Computing Services</p>
 </footer>
 
 <script>
@@ -398,6 +399,15 @@ $(document).ready(function(){
     });
   });
 })
+function sendMail() {
+    var link = "mailto:me@example.com"
+             + "?cc=myCCaddress@example.com"
+             + "&subject=" + escape("This is my subject")
+             + "&body=" + escape(document.getElementById('myText').value)
+    ;
+
+    window.location.href = link;
+}
 </script>
 
 </body>
