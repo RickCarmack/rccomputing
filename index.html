@@ -263,36 +263,13 @@
   <div class="row slideanim">
     <div class="col-sm-4">
       <span class="glyphicon glyphicon-off logo-small"></span>
-      <h4>POWER</h4>
-      <p>Lorem ipsum dolor sit amet..</p>
+      <h4>Websites</h4>
+      <p>Design, Setup and Maintenance</p>
     </div>
     <div class="col-sm-4">
       <span class="glyphicon glyphicon-heart logo-small"></span>
-      <h4>LOVE</h4>
-      <p>Lorem ipsum dolor sit amet..</p>
-    </div>
-    <div class="col-sm-4">
-      <span class="glyphicon glyphicon-lock logo-small"></span>
-      <h4>JOB DONE</h4>
-      <p>Lorem ipsum dolor sit amet..</p>
-    </div>
-  </div>
-  <br><br>
-  <div class="row slideanim">
-    <div class="col-sm-4">
-      <span class="glyphicon glyphicon-leaf logo-small"></span>
-      <h4>GREEN</h4>
-      <p>Lorem ipsum dolor sit amet..</p>
-    </div>
-    <div class="col-sm-4">
-      <span class="glyphicon glyphicon-certificate logo-small"></span>
-      <h4>CERTIFIED</h4>
-      <p>Lorem ipsum dolor sit amet..</p>
-    </div>
-    <div class="col-sm-4">
-      <span class="glyphicon glyphicon-wrench logo-small"></span>
-      <h4 style="color:#303030;">HARD WORK</h4>
-      <p>Lorem ipsum dolor sit amet..</p>
+      <h4>Database</h4>
+      <p>Design, Configuration and Analysis</p>
     </div>
   </div>
 </div>
@@ -398,16 +375,12 @@ $(document).ready(function(){
         }
     });
   });
+  $(document).on('click','.navbar-collapse.in',function(e) {
+    if( $(e.target).is('a') ) {
+        $(this).collapse('hide');
+    }
+  })
 })
-function sendMail() {
-    var link = "mailto:me@example.com"
-             + "?cc=myCCaddress@example.com"
-             + "&subject=" + escape("This is my subject")
-             + "&body=" + escape(document.getElementById('myText').value)
-    ;
-
-    window.location.href = link;
-}
 </script>
 
 </body>
