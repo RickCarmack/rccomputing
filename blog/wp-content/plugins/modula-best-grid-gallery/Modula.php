@@ -5,12 +5,17 @@
  * Description: Modula is one of the best & most creative WordPress gallery plugins. Use it to create a great grid or
  * masonry image gallery.
  * Author: Macho Themes
- * Version: 1.3.2
+ * Version: 1.3.3
  * Author URI: https://www.machothemes.com/
  */
 
 define( 'MODULA_PLUGIN_DIR_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MODULA_PLUGIN_DIR_URL', plugin_dir_url( __FILE__ ) );
+
+define( 'MODULA_VERSION', '1.3.3' );
+define( 'MODULA_PLUGIN_BASE', plugin_basename( __FILE__ ) );
+define( 'MODULA_PREVIOUS_PLUGIN_VERSION', '1.3.2' );
+define( 'MODULA_FILE_', __FILE__ );
 
 function modula_lite_create_db_tables() {
 	include_once( WP_PLUGIN_DIR . '/modula-best-grid-gallery/lib/install-db.php' );
@@ -23,7 +28,7 @@ if ( ! class_exists( "ModulaLite" ) ) {
 		private $loadedData;
 		private $fields = array();
 
-		private $version = "1.3.2";
+		private $version = "1.3.3";
 
 		private $defaultValues = array(
 			'width'            => 100,
@@ -108,6 +113,9 @@ if ( ! class_exists( "ModulaLite" ) ) {
 
 			add_filter( 'plugin_row_meta', array( $this, 'register_links' ), 10, 2 );
 			add_filter( 'admin_footer_text', array( $this, 'admin_footer' ), 1, 2 );
+
+			// Enqueue Fancybox for Modula 2.0 Page
+			add_action( 'admin_enqueue_scripts', array( $this, 'modula_beta_scripts' ) );
 
 
 			// Set fields
@@ -451,6 +459,17 @@ if ( ! class_exists( "ModulaLite" ) ) {
 					),
 				),
 			);
+
+		}
+
+		public function modula_beta_scripts( $hook ) {
+
+			if ( 'modula_page_modula-lite-gallery-v2' != $hook ) {
+				return;
+			}
+
+			wp_enqueue_script( 'modula-fancybox', plugins_url() . '/modula-best-grid-gallery/admin/fancybox/jquery.fancybox.min.js', array( 'jquery' ) );
+			wp_enqueue_style( 'modula-fancybox', plugins_url() . '/modula-best-grid-gallery/admin/fancybox/jquery.fancybox.min.css' );
 
 		}
 
@@ -875,6 +894,10 @@ if ( ! class_exists( "ModulaLite" ) ) {
 				$this,
 				'upgrade',
 			) );
+			$v2 = add_submenu_page( 'modula-lite-admin', __( 'Try Modula 2.0', 'modula-gallery' ), __( 'Try Modula 2.0', 'modula-gallery' ), 'edit_posts', 'modula-lite-gallery-v2', array(
+				$this,
+				'new_modula',
+			) );
 
 
 			add_action( 'load-' . $overview, array( $this, 'gallery_admin_init' ) );
@@ -895,6 +918,10 @@ if ( ! class_exists( "ModulaLite" ) ) {
 
 		public function add_gallery() {
 			include( "admin/add-gallery.php" );
+		}
+
+		public function new_modula() {
+			include( "admin/modula-v2.php" );
 		}
 
 		public function fix() {
@@ -1252,8 +1279,9 @@ class ModulaLiteTools {
 			$metadata = wp_get_attachment_metadata( $img->imageId );
 
 			if ( $img->imageId > 0 ) {
-				$wpdata   = get_post( $img->imageId );
-				$baseurl  = str_replace( basename( $wpdata->guid ), "", $wpdata->guid );
+				$uploads  = wp_get_upload_dir();
+				$file     = get_post_meta( $img->imageId, '_wp_attached_file', true );
+				$baseurl  = $uploads['baseurl'] . '/' . str_replace( basename( $file ), "", $file );
 				$res_name = ModulaLiteTools::resize_image( $img->imageId, $size );
 
 				if ( ! ( array_key_exists( "image_meta", $metadata ) && array_key_exists( "resized_images", $metadata["image_meta"] ) && in_array( $size . "x" . $size, $metadata["image_meta"]["resized_images"] ) ) ) {
@@ -1278,4 +1306,127 @@ if ( class_exists( "ModulaLite" ) ) {
 	global $ob_ModulaLite;
 	$ob_ModulaLite = new ModulaLite();
 }
-?>
+
+function modula_lite_check_for_review() {
+
+	if ( ! is_admin() ) {
+		return;
+	}
+
+	require_once MODULA_PLUGIN_DIR_PATH . 'lib/class-modula-review.php';
+
+	Modula_Review::get_instance( array(
+	    'slug' => 'modula-best-grid-gallery',
+	    'messages' => array(
+	    	'notice'  => __( "Hey, I noticed you have created %s galleries - that's awesome! Could you please do me a BIG favor and give it a 5-star rating on WordPress? Just to help us spread the word and boost our motivation.<br><br><strong>~ Cristian Raiber</strong>,<br><strong>CEO Modula</strong>.", 'modula-gallery' ),
+			'rate'    => __( 'Ok, you deserve it', 'modula-gallery' ),
+			'rated'   => __( 'I already did', 'modula-gallery' ),
+			'no_rate' => __( 'No, not good enough', 'modula-gallery' ),
+	    ),
+	) );
+
+}
+modula_lite_check_for_review();
+
+// Add compatibility with AO
+add_filter('autoptimize_filter_js_exclude','modula_lite_override_jsexclude',90,1);
+function modula_lite_override_jsexclude( $exclude ) {
+	if ( is_array( $exclude ) ) {
+		$exclude[] = 'jquery.modula.js';
+	}else{
+		$exclude .= ", jquery.modula.js";
+	}
+	return $exclude;
+}
+
+// Beta Testing.
+add_action( 'admin_notices', 'modula_beta_notices' );
+add_action( 'wp_ajax_modula_beta_testing', 'modula_beta_ajax' );
+add_action( 'admin_print_footer_scripts', 'modula_beta_ajax_script', 99 );
+
+function modula_beta_notices() {
+
+	$options = get_option( 'modula-checks', array() );
+
+	if ( isset( $options['beta-testing'] ) ) {
+		return;
+	}
+	?>
+	<style type="text/css">
+		#modula-beta-testing-info {
+			display: inline-block;
+			margin-left: 15px;
+		}
+	</style>
+	<div id="modula-beta-testing" class="notice notice-success is-dismissible">
+		<h3>Try Modula 2.0 !!</h3>
+		<p>We’ve been working on an awesome update to Modula over the last few months and can’t wait to release it to the public. But, before that can happen, we need the help of amazing users in the WordPress community (just like you) to improve Modula 2.0’s first beta.</p>
+		<p class="actions">
+			<a id="modula-beta-testing-dwn" href="https://machothemes.com/downloads/modula-2.0.0.zip" target="_blank" class="button button-primary modula-beta-testing-button"><?php echo __( 'Download Modula 2.0 Beta', 'modula-gallery' ); ?></a>
+			<a id="modula-beta-testing-info" href="<?php echo admin_url( 'admin.php?page=modula-lite-gallery-v2' ) ?>" target="_blank" class="modula-beta-testing-button"><?php echo __( 'Find more', 'modula-gallery' ); ?></a>
+		</p>
+	</div>
+	<?php
+}
+
+function modula_beta_ajax() {
+
+	check_ajax_referer( 'modula-beta-testing', 'security' );
+
+	$options = get_option( 'modula-checks', array() );
+	$options['beta-testing'] = 1;
+
+	update_option( 'modula-checks', $options );
+
+	wp_die( 'ok' );
+
+}
+
+function modula_beta_ajax_script() {
+
+	$ajax_nonce = wp_create_nonce( "modula-beta-testing" );
+
+	?>
+
+	<script type="text/javascript">
+		jQuery( document ).ready( function( $ ){
+
+			$( '.modula-beta-testing-button' ).click( function( evt ){
+				var href = $(this).attr('href'),
+					id = $(this).attr('id');
+
+				var data = {
+					action: 'modula_beta_testing',
+					security: '<?php echo $ajax_nonce; ?>',
+				};
+
+				$.post( '<?php echo admin_url( 'admin-ajax.php' ) ?>', data, function( response ) {
+					$( '#modula-beta-testing' ).slideUp( 'fast', function() {
+						$( this ).remove();
+					} );
+				});
+
+			} );
+
+		});
+	</script>
+
+	<?php
+}
+
+/* RollBack functionality */
+require MODULA_PLUGIN_DIR_PATH . '/lib/class-modula-plugin-rollback.php';
+require MODULA_PLUGIN_DIR_PATH . '/lib/class-modula-rollback.php';
+
+/**
+ * Insert Rollback link for plugin in plugins page
+ */
+
+function modula_lite_rollback_link( $links ) {
+
+	$links['rollback'] = sprintf( '<a href="%s" class="modula-rollback-button">%s</a>', wp_nonce_url( admin_url( 'admin-post.php?action=modula_rollback' ), 'modula_rollback' ), __( 'Rollback version', 'modula-gallery' ) );
+
+	return $links;
+}
+
+add_action( 'plugin_action_links_' . plugin_basename( __FILE__ ), 'modula_lite_rollback_link' );
